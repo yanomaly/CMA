@@ -14,7 +14,8 @@ public class Iteration_method {
     private static BigDecimal epsilon = new BigDecimal(Math.pow(10,-7));
     private static Integer max_k = 5000;
     private static Integer it_num = 0;
-    private static Double error = 0.0;
+    private static Double errorX = 0.0;
+    private static Double errorF = 0.0;
 
     public static void fill_matrix(int size, int param){
         Random elem = new Random();
@@ -22,13 +23,16 @@ public class Iteration_method {
         matrix_A = new Integer[size][size];
         matrix_X = new Integer[size];
         matrix_x0 = new Integer[size];
+        //Симметрическая матрица
         for(int i = 0; i < size; i++){
             for (int j = i + 1; j < size; j++) {
                 matrix_A[i][j] = (int)(Math.pow(-1.0, elem.nextInt()) * elem.nextInt(100));
                 matrix_A[j][i] = matrix_A[i][j];
             }
         }
+        //Диагональное преобладание
         for (int i = 0; i < size; i++) {
+            //Сумма элементов строки
             for (Integer temp: matrix_A[i]) {
                 if(temp != null)
                 sum += Math.abs(temp);
@@ -40,6 +44,7 @@ public class Iteration_method {
     }
 
     public static void fill_f(){
+        //Перемножение матриц
         Integer temp = 0;
         matrix_f = new Integer[matrix_A.length];
         for (int i = 0; i < matrix_A.length; i++) {
@@ -73,12 +78,14 @@ public class Iteration_method {
         for (Integer temp: matrix_x0)
             System.out.printf("%-4s", temp);
         System.out.println("\n\n"+"Number of iterations: "+"\n"+it_num);
-        System.out.println("\n"+"Error: "+"\n"+error);
+        System.out.println("\n"+"Delta x: "+"\n"+ errorX);
+        System.out.println("\n"+"Delta f: "+"\n"+ errorF);
     }
 
     public static Double norm(Double[] xK){
         Double temp = 0.0, norm = 0.0;
         Double temp_matrix[] = new Double[matrix_A.length];
+        //A*xK
         for (int i = 0; i < matrix_A.length; i++) {
             for (int j = 0; j < matrix_A.length; j++) {
                 temp += matrix_A[i][j] * xK[j];
@@ -86,8 +93,10 @@ public class Iteration_method {
             temp_matrix[i] = temp;
             temp = 0.0;
         }
+        //A*xK-f
         for (int i = 0; i < temp_matrix.length; i++)
             temp_matrix[i] = temp_matrix[i] - matrix_f[i];
+        //Норма
         for (Double tmp: temp_matrix)
             norm += Math.abs(tmp);
         return norm;
@@ -99,8 +108,10 @@ public class Iteration_method {
         Double temp_matrix[] = new Double[matrix_A.length];
         Double tauK, temp_u, temp_l;
         int k = 0;
+        //X0 -> xK
         for (int i = 0; i < xK.length; i++)
             xK[i] = (double)matrix_x0[i];
+
         while(k < max_k && epsilon.compareTo(new BigDecimal(norm(xK))) < 0){
             k++;
             Double temp = 0.0;
@@ -135,19 +146,25 @@ public class Iteration_method {
             for (int i = 0; i < xK.length; i++)
                 xK[i] = xK[i] - tauK*rK[i];
         }
+        if(k == max_k)
+            System.out.println("iteration limit reached");
         it_num = k;
         matrix_xq = xK;
+        //Погрешность абсолютная
         for (int i = 0; i < matrix_xq.length; i++)
-            error += Math.abs(matrix_xq[i] - matrix_X[i]);
+            errorX += Math.abs(matrix_xq[i] - matrix_X[i]);
+        errorF = norm(xK);
     }
 
     public static void relax(Double rel_c){
         Double xK[] = new Double[matrix_A.length];
+        //X0 -> xK
         for (int i = 0; i < xK.length; i++)
             xK[i] = (double)matrix_x0[i];
         int k = 0;
         double sum = 0;
-        while(k < max_k && epsilon.compareTo(new BigDecimal(norm(xK))) < 0) {
+        BigDecimal a;
+        while(k < max_k && epsilon.compareTo(a = new BigDecimal(norm(xK))) < 0) {
             k++;
             for (int i = 0; i < xK.length; i++) {
                 for (int j = 0; j < xK.length; j++) {
@@ -158,16 +175,21 @@ public class Iteration_method {
                 sum = 0;
             }
         }
+
+        if(k == max_k)
+            System.out.println("iteration limit reached");
         it_num = k;
         matrix_xq = xK;
+        //Погрешность абсолютная
         for (int i = 0; i < matrix_xq.length; i++)
-            error += Math.abs(matrix_xq[i] - matrix_X[i]);
+            errorX += Math.abs(matrix_xq[i] - matrix_X[i]);
+        errorF = norm(xK);
     }
 
     public static void experem(){
         for (int i = 0; i < rel_c.length; i++) {
             relax(rel_c[i]);
-            System.out.println("Number of iterations: "+it_num+" error: "+error+" coefficient: "+rel_c[i]);
+            System.out.println("Coefficient: "+rel_c[i] +" number of iterations: "+ it_num + " delta f : "+ errorF + " delta x: "+ errorX);
         }
     }
 
