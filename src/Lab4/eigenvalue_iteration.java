@@ -12,8 +12,6 @@ public class eigenvalue_iteration {
     private Double[][] nedo_deficiency;
     private Integer iterations_number = 0;
 
-    ///////////////////////Task 2////////////////////////////
-
     public void fill_matrix(int size){
         Random rand = new Random();
         A = new Double[size][size];
@@ -33,6 +31,63 @@ public class eigenvalue_iteration {
             }
         }
     }
+
+    ///////////////////////Task 1////////////////////////////
+
+    public Double norm(Double[] vector){
+        Double norm = 0.0;
+        for (Double temp: vector) {
+            norm += temp*temp;
+        }
+        return Math.sqrt(norm);
+    }
+
+    public void deg(){
+        Double[][] A_copy = new Double[A.length][A.length];
+        Double[] vector = new Double[A.length], exit = new Double[A.length], vector_n = new Double[A.length];
+        Double lambda = 0.0;
+        for (int k = 0; k < A.length; k++) {
+            vector_n[k] = 0.0;
+            exit[k] = 1.0;
+            for (int l = 0; l < A.length; l++) {
+                A_copy[k][l] = A[k][l];
+            }
+        }
+        vector_n[0] = 1.0;
+
+        while(norm(exit).compareTo(epsilon) >= 0){
+            Double sum = 0.0;
+            for (int i = 0; i < A.length; i++)
+                vector[i] = vector_n[i];
+
+            for (int i = 0; i < A.length; i++) {
+                for (int j = 0; j < A.length; j++) {
+                    sum += A_copy[i][j]*vector[j];
+                }
+                vector_n[i] = sum;
+            }
+
+            lambda = vector_n[0]/vector[0];
+
+            Double norma = norm(vector_n);
+            for (int i = 0; i < A.length; i++)
+                vector_n[i] /= norma;
+
+            for (int i = 0; i < A.length; i++) {
+                for (int j = 0; j < A.length; j++) {
+                    sum += A_copy[i][j]*vector[j];
+                }
+                exit[i] = sum - lambda*vector[i];
+            }
+            System.out.println(norm(exit));
+        }
+
+        System.out.println(Arrays.toString(exit));
+        System.out.println(lambda);
+        System.out.println(vector);
+    }
+
+    ///////////////////////Task 2////////////////////////////
 
     public Double exit(Double[][] _A){
         Double sum = 0.0;
@@ -127,12 +182,10 @@ public class eigenvalue_iteration {
 
     public static void main(String[] args) {
         eigenvalue_iteration a = new eigenvalue_iteration();
-        a.fill_matrix(10);
+        a.fill_matrix(3);
         a.spin();
         System.out.println(a.iterations_number);
-        for (Double[] temp:
-                a.multiply(a.A, a.vectors, a.eigenvalue)) {
-            System.out.println(Arrays.toString(temp));
-        }
+        System.out.println(Arrays.toString(a.eigenvalue));
+        a.deg();
     }
 }
