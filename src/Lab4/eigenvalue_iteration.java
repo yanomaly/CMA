@@ -46,6 +46,7 @@ public class eigenvalue_iteration {
         Double[][] A_copy = new Double[A.length][A.length];
         Double[] vector = new Double[A.length], exit = new Double[A.length], vector_n = new Double[A.length];
         Double lambda = 0.0;
+        //fill A_copy, vector & vector_n(ext)
         for (int k = 0; k < A.length; k++) {
             vector_n[k] = 0.0;
             exit[k] = 1.0;
@@ -54,42 +55,62 @@ public class eigenvalue_iteration {
             }
         }
         vector_n[0] = 1.0;
-
-        while(norm(exit).compareTo(epsilon) >= 0){
+        System.out.println("Y0:\n" + Arrays.toString(vector_n)+"\n");
+        while(norm(exit).compareTo(epsilon) >= 0 || iterations_number > 10000){
+            iterations_number++;
             Double sum = 0.0;
+            //vector_n->vector
             for (int i = 0; i < A.length; i++)
                 vector[i] = vector_n[i];
-
+            //A*vector_n
             for (int i = 0; i < A.length; i++) {
                 for (int j = 0; j < A.length; j++) {
                     sum += A_copy[i][j]*vector[j];
                 }
                 vector_n[i] = sum;
+                sum = 0.0;
             }
-
-            lambda = vector_n[0]/vector[0];
-
+            Double sk1 = 0.0, sk2 = 0.0;
+            for (int i = 0; i < A.length; i++) {
+                sk1 += vector_n[i]*vector_n[i];
+                sk2 += vector[i]*vector_n[i];
+            }
+            lambda = sk1/sk2;
+            //norm
             Double norma = norm(vector_n);
             for (int i = 0; i < A.length; i++)
                 vector_n[i] /= norma;
-
+            //A*vector-A*lambda
             for (int i = 0; i < A.length; i++) {
                 for (int j = 0; j < A.length; j++) {
                     sum += A_copy[i][j]*vector[j];
                 }
                 exit[i] = sum - lambda*vector[i];
+                sum = 0.0;
             }
-            System.out.println(norm(exit));
         }
-
-        System.out.println(Arrays.toString(exit));
-        System.out.println(lambda);
-        System.out.println(vector);
+        if(iterations_number > 10000)
+            System.out.println("Process diverge!");
+        else {
+            System.out.println("Iterations number:\n" + iterations_number + "\n");
+            iterations_number = 0;
+            System.out.println("Eigen value (max abs):\n" + lambda + "\n");
+            System.out.println("Eigen vector:");
+            for (Double temp : vector) {
+                System.out.println("[" + temp + "]");
+            }
+            System.out.println("\nA*vector-lambda*A:");
+            for (Double temp : exit) {
+                System.out.println("[" + temp + "]");
+            }
+            System.out.println("\n||A*vector-lambda*A||:\n" + norm(exit) + "\n");
+        }
     }
 
     ///////////////////////Task 2////////////////////////////
 
     public Double exit(Double[][] _A){
+        //sum (Xij)^2 i!=j
         Double sum = 0.0;
         for (int i = 0; i < _A.length; i++) {
             for (int j = 0; j < _A.length; j++) {
@@ -101,6 +122,7 @@ public class eigenvalue_iteration {
     }
 
     public Double[][] multiply(Double[][] _A, Double[][] _vectors, Double[] _eigenvalue){
+        //A*vectors - A*eigenvalue
         nedo_deficiency = new Double[A.length][A.length];
         double sum;
         for (int i = 0; i < A.length; i++) {
@@ -118,6 +140,7 @@ public class eigenvalue_iteration {
 
     public void spin() {
         Double[][] A_copy = new Double[A.length][A.length];
+        //A->A_copy
         for (int k = 0; k < A.length; k++) {
             for (int l = 0; l < A.length; l++) {
                 A_copy[k][l] = A[k][l];
@@ -128,7 +151,7 @@ public class eigenvalue_iteration {
         while (exit(A_copy).compareTo(epsilon) >= 0) {
             iterations_number++;
             max_elem = 0.0;
-
+            //search max elem + indexes
             for (int k = 0; k < A_copy.length; k++) {
                 for (int l = k + 1; l < A_copy.length; l++) {
                     if (max_elem < Math.abs(A_copy[k][l])) {
@@ -138,7 +161,7 @@ public class eigenvalue_iteration {
                     }
                 }
             }
-
+            //sin cos
             if (A_copy[i][i].compareTo(A_copy[j][j]) == 0) {
                 cos = 1 / Math.sqrt(2);
                 sin = cos;
@@ -147,7 +170,7 @@ public class eigenvalue_iteration {
                 cos = Math.sqrt((1 + 1 / (Math.sqrt(1 + mu * mu))) / 2);
                 sin = Math.signum(mu) * Math.sqrt((1 - 1 / (Math.sqrt(1 + mu * mu))) / 2);
             }
-
+            //make copies
             Double[][] temp = new Double[A.length][A.length], tempv = new Double[A.length][A.length];
             for (int k = 0; k < A.length; k++) {
                 for (int l = 0; l < A.length; l++) {
@@ -155,7 +178,7 @@ public class eigenvalue_iteration {
                     tempv[k][l] = vectors[k][l];
                 }
             }
-
+            //recalculate columns
             for (int k = 0; k < A.length; k++) {
                 A_copy[k][i] = temp[k][i] * cos + temp[k][j] * sin;
                 A_copy[k][j] = temp[k][i] * (-sin) + temp[k][j] * cos;
@@ -167,12 +190,14 @@ public class eigenvalue_iteration {
                     temp[k][l] = A_copy[k][l];
                 }
             }
+            //recalculate rows
             for (int k = 0; k < A.length; k++) {
                 A_copy[i][k] = temp[i][k] * cos + temp[j][k] * sin;
                 A_copy[j][k] = temp[i][k] * (-sin) + temp[j][k] * cos;
             }
 
         }
+
         eigenvalue = new Double[A.length];
         for (int k = 0; k < A.length; k++)
             eigenvalue[k] = A_copy[k][k];
@@ -181,11 +206,19 @@ public class eigenvalue_iteration {
     /////////////////////////////////////////////////////////
 
     public static void main(String[] args) {
-        eigenvalue_iteration a = new eigenvalue_iteration();
-        a.fill_matrix(3);
-        a.spin();
-        System.out.println(a.iterations_number);
-        System.out.println(Arrays.toString(a.eigenvalue));
-        a.deg();
+        eigenvalue_iteration run = new eigenvalue_iteration();
+        run.fill_matrix(10);
+        run.deg();
+        run.spin();
+        System.out.println("Iterations number:\n"+run.iterations_number+"\n");
+        System.out.println("Eigen values:\n" + Arrays.toString(run.eigenvalue)+"\n");
+        System.out.println("Eigen vectors:");
+        for (Double[] temp : run.vectors) {
+            System.out.println(Arrays.toString(temp));
+        }
+        System.out.println("\nA*vector-lambda*A:");
+        for (Double[] temp : run.multiply(run.A, run.vectors, run.eigenvalue)) {
+            System.out.println(Arrays.toString(temp));
+        }
     }
 }
